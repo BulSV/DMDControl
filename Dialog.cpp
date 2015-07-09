@@ -115,9 +115,9 @@ Dialog::Dialog(QWidget *parent) :
     gbSetGainIQ->setLayout(gridGainIQ);
 
     QGridLayout *gridConfig = new QGridLayout;
-    gridConfig->addWidget(gbSetFreq, 0, 0, 1, 2);
-    gridConfig->addWidget(gbSetFStrobe, 0, 2, 1, 1);
-    gridConfig->addWidget(gbSetGainIQ, 0, 4, 1, 1);
+    gridConfig->addWidget(gbSetFreq, 0, 0, 5, 2);
+    gridConfig->addWidget(gbSetFStrobe, 0, 2, 2, 1);
+    gridConfig->addWidget(gbSetGainIQ, 2, 2, 2, 1);
 
     gbConfig->setLayout(gridConfig);    
 
@@ -144,10 +144,14 @@ Dialog::Dialog(QWidget *parent) :
     grid->addWidget(new QLabel("<img src=':/Resources/elisat.png' height='40' width='150'/>", this), 0, 4, 2, 2, Qt::AlignRight);
     grid->setSpacing(5);
 
+    QGridLayout *gridAll = new QGridLayout;
+    gridAll->addItem(grid, 0, 0, 2, 6);
+    gridAll->addWidget(gbConfig, 2, 0, 5, 4);
+    gridAll->addWidget(gbInfo, 2, 4, 4, 2);
+    gridAll->setSpacing(5);
+
     setLayout(new QGridLayout(this));
-    layout()->addItem(grid);
-    layout()->addWidget(gbConfig);
-    layout()->addWidget(gbInfo);
+    layout()->addItem(gridAll);
     layout()->setSpacing(5);
 
     // made window of app fixed size
