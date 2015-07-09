@@ -1,14 +1,8 @@
 #include "Dialog.h"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QGridLayout>
-#include <QMessageBox>
 #include <QApplication>
-#include <QFile>
-#include <QDesktopWidget>
 #include <QShortcut>
 #include <QSerialPortInfo>
-#include <QPalette>
 #include <QIcon>
 
 #define STARTBYTE 0x55
@@ -28,6 +22,8 @@
 #define FREQ_RANGE_MIN 0
 #define FREQ_RANGE_MAX 111
 
+#define FREQ_PHASE_SEPARATOR "|"
+
 #define PHASE_RANGE_MIN 0
 #define PHASE_RANGE_MAX 360
 #define PHASE_STEP 2.25
@@ -36,13 +32,11 @@
 #define GAIN_DIGITS 4
 #define TEMP_DIGITS 6
 
-#define CODE_WRITE 0x00
-#define CODE_OFFSET 0x01
-#define CODE_GAIN 0x02
-#define CODE_TEMP 0x03
-#define CODE_CALIBR 0x04
+#define CODE_RES_MON 0x01
+#define CODE_F_STROBE 0x02
+#define CODE_GAIN_IQ 0x03
 
-#define NONE_DATA 0x00
+#define CODE_NONE_DATA 0x00
 
 Dialog::Dialog(QWidget *parent) :
         QDialog(parent),
@@ -60,10 +54,10 @@ Dialog::Dialog(QWidget *parent) :
         sbSetPhase(new QDoubleSpinBox(this)),
         cbSetFStrobe(new QComboBox(this)),
         sbSetGainIQ(new QSpinBox(this)),
-        lFreqInfo(new QLabel(QString::fromUtf8("Low Frequency:"), this)),
-        lPhaseInfo(new QLabel(QString::fromUtf8("Phase:"), this)),
-        lFStrobeInfo(new QLabel(QString::fromUtf8("F-Strobe:"), this)),
-        lGainIQInfo(new QLabel(QString::fromUtf8("Gain I, Q:"), this)),
+        lFreqInfo(new QLabel(QString::fromUtf8("Low Frequency: NONE"), this)),
+        lPhaseInfo(new QLabel(QString::fromUtf8("Phase: NONE"), this)),
+        lFStrobeInfo(new QLabel(QString::fromUtf8("F-Strobe: NONE"), this)),
+        lGainIQInfo(new QLabel(QString::fromUtf8("Gain I, Q: NONE"), this)),
         bSetFreq(new QPushButton(QString::fromUtf8("Set"), this)),
         bSetFStrobe(new QPushButton(QString::fromUtf8("Set"), this)),
         bSetGainIQ(new QPushButton(QString::fromUtf8("Set"), this)),
@@ -213,9 +207,9 @@ Dialog::Dialog(QWidget *parent) :
 
     connect(m_TimeToDisplay, SIGNAL(timeout()), this, SLOT(displayData()));
 
-    connect(bSetGainIQ, SIGNAL(clicked()), this, SLOT(writeTemp()));
-    connect(bSetFreq, SIGNAL(clicked()), this, SLOT(writeOffset()));
-    connect(bSetFStrobe, SIGNAL(clicked()), this, SLOT(writeGain()));
+    connect(bSetGainIQ, SIGNAL(clicked()), this, SLOT(writeGainIQ()));
+    connect(bSetFreq, SIGNAL(clicked()), this, SLOT(writeRESMON()));
+    connect(bSetFStrobe, SIGNAL(clicked()), this, SLOT(writeFStrobe()));
 
     QShortcut *aboutShortcut = new QShortcut(QKeySequence("F1"), this);
     connect(aboutShortcut, SIGNAL(activated()), qApp, SLOT(aboutQt()));
@@ -310,31 +304,25 @@ void Dialog::write(const Dialog::CODE &code)
         QString data;
 
         switch ( static_cast<int>(code) ) {
-        case 0:
-            codeStr = QString::number(CODE_WRITE);
-            data = QString::number(NONE_DATA);
-            break;
         case 1:
-            codeStr = QString::number(CODE_OFFSET);
-            data = QString::number(sbSetFreq->value());
-            m_isDataSet.insert("OFFSET", true);
+            codeStr = QString::number(CODE_RES_MON);
+            data = QString::number(rbHighFreq ? sbSetFreq->value() | 0x80 : sbSetFreq->value());
+            data += QString::fromUtf8(FREQ_PHASE_SEPARATOR);
+            data += QString::number(sbSetPhase->value()/PHASE_STEP);
+            m_isDataSet.insert("RESMON", true);
             break;
         case 2:
-            codeStr = QString::number(CODE_GAIN);
-            data = QString::number(sbSetPhase->value());
-            m_isDataSet.insert("GAIN", true);
+            codeStr = QString::number(CODE_F_STROBE);
+            data = cbSetFStrobe->currentText();
+            m_isDataSet.insert("FSTROBE", true);
             break;
         case 3:
-            codeStr = QString::number(CODE_TEMP);
+            codeStr = QString::number(CODE_GAIN_IQ);
             data = QString::number(sbSetGainIQ->value());
-            m_isDataSet.insert("TEMP", true);
-            break;
-        case 4:
-            codeStr = QString::number(CODE_CALIBR);
-            data = QString::number(NONE_DATA);
+            m_isDataSet.insert("GAINIQ", true);
             break;
         default:
-            codeStr = QString::number(CODE_CALIBR);
+            codeStr = QString::number(CODE_NONE_DATA);
             break;
         }
         dataTemp.insert("CODE", codeStr);
@@ -344,56 +332,24 @@ void Dialog::write(const Dialog::CODE &code)
     }
 }
 
-void Dialog::writeOffset()
+void Dialog::writeRESMON()
 {
-    write(OFFSET);
+    write(RESMON);
 }
 
-void Dialog::writeGain()
+void Dialog::writeFStrobe()
 {
-    write(GAIN);
+    write(FSTROBE);
 }
 
-void Dialog::writeTemp()
+void Dialog::writeGainIQ()
 {
-    write(TEMP);
-}
-
-void Dialog::calibrate()
-{
-    write(CALIBR);
-}
-
-void Dialog::writePermanently()
-{
-    write(WRITE);
+    write(GAINIQ);
 }
 
 void Dialog::colorTxNone()
 {
     m_BlinkTimeTxNone->stop();
-}
-
-QString &Dialog::addTrailingZeros(QString &str, int prec)
-{
-    if(str.isEmpty() || prec < 1) { // if prec == 0 then it's no sense
-        return str;
-    }
-
-    int pointIndex = str.indexOf(".");
-    if(pointIndex == -1) {
-        str.append(".");
-        pointIndex = str.size() - 1;
-    }
-
-    if(str.size() - 1 - pointIndex < prec) {
-        int size = str.size();
-        for(int i = 0; i < prec - (size - 1 - pointIndex); ++i) {
-            str.append("0");
-        }
-    }
-
-    return str;
 }
 
 void Dialog::colorIsRx()
@@ -419,12 +375,45 @@ void Dialog::displayData()
 {
     m_TimeToDisplay->stop();
 
-    // TODO
+    QString tempStr;
+
+    if(!m_isDataSet.value("RESMON")
+            && !m_isDataSet.value("FSTROBE")
+            && !m_isDataSet.value("GAINIQ")) {
+        return;
+    }
+
+    if(m_isDataSet.value("RESMON")) {
+        tempStr = m_DisplayList.value("RESMON");
+        int freq = tempStr.section(FREQ_PHASE_SEPARATOR, 0, 0).toInt();
+        double phase = tempStr.section(FREQ_PHASE_SEPARATOR, 1, 1).toDouble();
+        if(freq & 0x80) {
+            freq &= 0x7F;
+            tempStr = QString::fromUtf8("High Frequency: ");
+        } else {
+            tempStr = QString::fromUtf8("Low Frequency: ");
+        }
+        lFreqInfo->setText(tempStr + QString::number(freq));
+        lPhaseInfo->setText(QString::fromUtf8("Phase: ") + QString::number(phase * PHASE_STEP));
+    }
+    if(m_isDataSet.value("FSTROBE")) {
+        lFStrobeInfo->setText(QString::fromUtf8("F-Strobe: ") + m_DisplayList.value("FSTROBE"));
+    }
+    if(m_isDataSet.value("GAINIQ")) {
+        lGainIQInfo->setText(QString::fromUtf8("Gain I, Q: ") + m_DisplayList.value("GAINIQ"));
+    }
+
+    m_DisplayList.clear();
 }
 
 void Dialog::initIsDataSet()
 {
-    m_isDataSet.insert("OFFSET", false);
-    m_isDataSet.insert("GAIN", false);
-    m_isDataSet.insert("TEMP", false);
+    m_isDataSet.insert("RESMON", false);
+    m_isDataSet.insert("FSTROBE", false);
+    m_isDataSet.insert("GAINIQ", false);
+
+    lFreqInfo->setText(QString::fromUtf8("Low Frequency: NONE"));
+    lPhaseInfo->setText(QString::fromUtf8("Phase: NONE"));
+    lFStrobeInfo->setText(QString::fromUtf8("F-Strobe: NONE"));
+    lGainIQInfo->setText(QString::fromUtf8("Gain I, Q: NONE"));
 }

@@ -25,11 +25,9 @@ class Dialog : public QDialog
     Q_OBJECT
 
     enum CODE {
-        WRITE,
-        OFFSET,
-        GAIN,
-        TEMP,
-        CALIBR
+        RESMON = 0x01,
+        FSTROBE,
+        GAINIQ
     };
 
     QLabel *lPort;
@@ -70,8 +68,6 @@ class Dialog : public QDialog
 
     QMap<QString, QString> m_DisplayList;
 
-    QString &addTrailingZeros(QString &str, int prec);
-
     void write(const CODE &code);
 
     QTimer *m_BlinkTimeTxNone;
@@ -87,11 +83,9 @@ private slots:
     void openPort();
     void closePort();
     void received(bool isReceived);
-    void writeOffset();
-    void writeGain();
-    void writeTemp();
-    void calibrate();
-    void writePermanently();
+    void writeRESMON();
+    void writeFStrobe();
+    void writeGainIQ();
     // Blinking labels "Rx" - at receiving and "Tx" - at sending packet
     void colorTxNone();
     void colorRxNone();
