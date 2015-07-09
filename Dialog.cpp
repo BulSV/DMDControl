@@ -132,16 +132,17 @@ Dialog::Dialog(QWidget *parent) :
     grid->addWidget(cbBaud, 1, 1);
     grid->addWidget(bPortStart, 0, 2);
     grid->addWidget(bPortStop, 1, 2);
-    grid->addWidget(lTx, 0, 3);
-    grid->addWidget(lRx, 1, 3);
+    grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding), 0, 3);
     // Inserting company logo
     grid->addWidget(new QLabel("<img src=':/Resources/elisat.png' height='40' width='150'/>", this), 0, 4, 2, 2, Qt::AlignRight);
     grid->setSpacing(5);
 
     QGridLayout *gridAll = new QGridLayout;
-    gridAll->addItem(grid, 0, 0, 2, 6);
-    gridAll->addWidget(gbConfig, 2, 0, 5, 4);
-    gridAll->addWidget(gbInfo, 2, 4, 4, 2);
+    gridAll->addItem(grid, 0, 0, 2, 5);
+    gridAll->addWidget(gbConfig, 2, 0, 5, 3);
+    gridAll->addWidget(gbInfo, 2, 3, 4, 2);
+    gridAll->addWidget(lTx, 6, 3);
+    gridAll->addWidget(lRx, 6, 4);
     gridAll->setSpacing(5);
 
     setLayout(new QGridLayout(this));
