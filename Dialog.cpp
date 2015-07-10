@@ -28,10 +28,6 @@
 #define PHASE_RANGE_MAX 360
 #define PHASE_STEP 2.25
 
-#define OFFSET_DIGITS 4
-#define GAIN_DIGITS 4
-#define TEMP_DIGITS 6
-
 #define CODE_RES_MON 0x01
 #define CODE_F_STROBE 0x02
 #define CODE_GAIN_IQ 0x03

@@ -31,12 +31,8 @@ private:
     int m_numResends;
     int m_currentResend;
 
-    QVector<int> m_calibrCoeffs;
-
     // converting 2 bytes to int
     int wordToInt(QByteArray ba);
-    // calculate temperature
-    double sensorTemp(const int &ADC16);
     // converting number to byte array
     QByteArray intToByteArray(const int &value, const int &numBytes);
 };
