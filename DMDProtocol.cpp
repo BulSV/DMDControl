@@ -50,14 +50,22 @@ void DMDProtocol::readData(bool isReaded)
         ba = itsComPort->getReadData();
 
         m_ReadData.insert(QString("RESMON"),
-                          QString(ba.mid(1, 1)) +
+                          QString::number(static_cast<int>(ba.at(1))) +
                           QString(FREQ_PHASE_SEPARATOR) +
-                          QString(ba.mid(2, 1)));
+                          QString::number(static_cast<int>(ba.at(2))));
+#ifdef DEBUG
+        qDebug() << "RESMON:" << m_ReadData;
+#endif
         m_ReadData.insert(QString("FSTROBE"),
-                          QString(ba.mid(3, 1)));
+                          QString::number(static_cast<int>(ba.at(3))));
+#ifdef DEBUG
+        qDebug() << "RESMON+FSTROBE:" << m_ReadData;
+#endif
         m_ReadData.insert(QString("GAINIQ"),
-                          QString(ba.mid(4, 1)));
-
+                          QString::number(static_cast<int>(ba.at(4))));
+#ifdef DEBUG
+        qDebug() << "RESMON+FSTROBE+GAINIQ:" << m_ReadData;
+#endif
         emit DataIsReaded(true);
 
     } else {

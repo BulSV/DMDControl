@@ -61,7 +61,7 @@ Dialog::Dialog(QWidget *parent) :
         gbSetFStrobe(new QGroupBox(QString::fromUtf8("F-Strobe"), this)),
         gbSetGainIQ(new QGroupBox(QString::fromUtf8("Gain I, Q"), this)),
         gbConfig(new QGroupBox(QString::fromUtf8("Configure"), this)),
-        gbInfo(new QGroupBox(QString::fromUtf8("Information"), this)),        
+        gbInfo(new QGroupBox(QString::fromUtf8("Information"), this)),
         m_Port(new QSerialPort(this)),
         m_ComPort(new ComPort(m_Port, STARTBYTE, STOPBYTE, BYTESLENTH, true, this)),
         m_Protocol(new DMDProtocol(m_ComPort, this)),
@@ -109,9 +109,9 @@ Dialog::Dialog(QWidget *parent) :
     gridConfig->addWidget(gbSetFStrobe, 0, 2, 2, 1);
     gridConfig->addWidget(gbSetGainIQ, 2, 2, 2, 1);
 
-    gbConfig->setLayout(gridConfig);    
+    gbConfig->setLayout(gridConfig);
 
-    QGridLayout *gridInfo = new QGridLayout;    
+    QGridLayout *gridInfo = new QGridLayout;
     gridInfo->addWidget(lFreqInfo, 0, 0);
     gridInfo->addWidget(lPhaseInfo, 1, 0);
     gridInfo->addWidget(lFStrobeInfo, 2, 0);
@@ -283,7 +283,7 @@ void Dialog::received(bool isReceived)
             m_TimeToDisplay->start();
         }
 
-        m_DisplayList = m_Protocol->getReadedData();        
+        m_DisplayList = m_Protocol->getReadedData();
     }
 }
 
@@ -303,7 +303,7 @@ void Dialog::write(const Dialog::CODE &code)
         switch ( static_cast<int>(code) ) {
         case 1:
             codeStr = QString::number(CODE_RES_MON);
-            data = QString::number(rbHighFreq ? sbSetFreq->value() | 0x80 : sbSetFreq->value());
+            data = QString::number(rbHighFreq->isChecked() ? sbSetFreq->value() | 0x80 : sbSetFreq->value());
             data += QString::fromUtf8(FREQ_PHASE_SEPARATOR);
             data += QString::number(sbSetPhase->value()/PHASE_STEP);
             m_isDataSet.insert("RESMON", true);
@@ -384,6 +384,10 @@ void Dialog::displayData()
         tempStr = m_DisplayList.value("RESMON");
         int freq = tempStr.section(FREQ_PHASE_SEPARATOR, 0, 0).toInt();
         double phase = tempStr.section(FREQ_PHASE_SEPARATOR, 1, 1).toDouble();
+#ifdef DEBUG
+        qDebug() << "FREQ:" << freq;
+        qDebug() << "PHASE:" << phase;
+#endif
         if(freq & 0x80) {
             freq &= 0x7F;
             tempStr = QString::fromUtf8("High Frequency: ");
