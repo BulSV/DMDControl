@@ -394,6 +394,11 @@ void Dialog::displayData()
         } else {
             tempStr = QString::fromUtf8("Low Frequency: ");
         }
+
+        if(phase < 0) {
+            phase += 0x100;
+        }
+
         lFreqInfo->setText(tempStr + QString::number(freq));
         lPhaseInfo->setText(QString::fromUtf8("Phase: ") + QString::number(phase * PHASE_STEP));
     }

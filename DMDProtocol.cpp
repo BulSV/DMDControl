@@ -48,7 +48,9 @@ void DMDProtocol::readData(bool isReaded)
         QByteArray ba;
 
         ba = itsComPort->getReadData();
-
+#ifdef DEBUG
+        qDebug() << "READ:" << ba.toHex();
+#endif
         m_ReadData.insert(QString("RESMON"),
                           QString::number(static_cast<int>(ba.at(1))) +
                           QString(FREQ_PHASE_SEPARATOR) +
@@ -99,7 +101,9 @@ void DMDProtocol::writeData()
     ba.append(NULL_DATA);
     ba.append(NULL_DATA);
     ba.append(STOPBYTE);
-
+#ifdef DEBUG
+    qDebug() << "SEND:" << ba.toHex();
+#endif
     itsComPort->setWriteData(ba);
     itsComPort->writeData();
 }
